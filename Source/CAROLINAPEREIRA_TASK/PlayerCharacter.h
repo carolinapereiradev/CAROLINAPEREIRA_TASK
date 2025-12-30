@@ -30,10 +30,10 @@ public:
     float BaseLookUpRate;
 
     UFUNCTION(BlueprintCallable, Category = "Skate")
-    bool PushState() { return isTryingToPush; }
+    bool PushState();
 
     UFUNCTION(BlueprintCallable, Category = "Skate")
-    void ChangePushState (bool NewState) { isTryingToPush = NewState; }
+    void ChangePushState(bool NewState);
 
     UFUNCTION(BlueprintCallable, Category = "Skate")
     void ResetPush();
@@ -84,13 +84,6 @@ protected:
 
     UPROPERTY(EditAnywhere, Category = "Skate")
     float DecayRate = 40.0f;
-
-    /** Current movement velocity and input direction */
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
-    FVector CurrentVelocity;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
-    FVector InputDirection;
 
     bool isTryingToPush = false;
 

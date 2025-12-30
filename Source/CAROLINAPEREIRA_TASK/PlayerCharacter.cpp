@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "PlayerCharacter.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
@@ -45,7 +44,7 @@ APlayerCharacter::APlayerCharacter()
 	Wheels = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WheelsStaticMeshComponent"));
 
 	// Attach skateboard components to the character mesh
-	Skate->SetupAttachment(GetMesh());
+	Skate->SetupAttachment(RootComponent);
 	SkateBase->SetupAttachment(Skate);
 	Wheel->SetupAttachment(Skate);
 	Wheels->SetupAttachment(Skate);
@@ -156,6 +155,16 @@ void APlayerCharacter::Push()
 		// Schedule reset
 		GetWorldTimerManager().SetTimer(PushCooldownTimer, this, &APlayerCharacter::ResetPush, PushCooldown, false);
 	}
+}
+
+bool APlayerCharacter::PushState()
+{
+	return isTryingToPush;
+}
+
+void APlayerCharacter::ChangePushState(bool NewState)
+{
+	isTryingToPush = NewState;
 }
 
 void APlayerCharacter::ResetPush()

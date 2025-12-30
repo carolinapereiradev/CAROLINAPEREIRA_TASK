@@ -34,6 +34,7 @@ void ACollectible::BeginPlay()
 	Super::BeginPlay();
 
 	GameInstance = Cast<UMyGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+	GameInstance->IncreaseTotalAmount();
 
 	ObjectStartLocation = GetActorLocation();
 	ObjectEndLocation = GetActorLocation() + FVector(0.0f, 0.0f, DistanceToMove);
@@ -87,7 +88,7 @@ void ACollectible::FloatingOnTimelineFinishes()
 
 void ACollectible::CollectCollectible()
 {
-	GameInstance->AddCollectible();
+	GameInstance->AddCollectibleCollected();
 	Destroy();
 }
 

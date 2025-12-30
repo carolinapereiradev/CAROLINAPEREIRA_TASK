@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "MyGameInstance.h"
+#include "HUDWidget.h"
 #include "MyGameMode.h"
 
 // Called when the game starts or when spawned
@@ -13,17 +14,30 @@ void UMyGameInstance::Init()
 	}
 }
 
-void UMyGameInstance::AddCollectible()
+void UMyGameInstance::AddCollectibleCollected()
 {
-	CollectibleAmount += 1;
+	CollectiblesCollected += 1;
+
+	if (HUDWidget)
+	{
+		HUDWidget->UpdateCollectiblesCollected(CollectiblesCollected);
+	}
 }
 
-int UMyGameInstance::GetCollectibleAmount()
+void UMyGameInstance::IncreaseTotalAmount()
+{
+	CollectibleAmount += 1;	
+}
+
+void UMyGameInstance::UpdateWidgetCollectiblesTotalAmount()
+{
+	if (HUDWidget)
+	{
+		HUDWidget->SetTotalAmount(CollectibleAmount);
+	}
+}
+
+int UMyGameInstance::GetTotalCollectibleAmount()
 {
 	return CollectibleAmount;
-}
-
-void UMyGameInstance::SetCollectiblesAmount(int Amount)
-{
-	CollectibleAmount = Amount;
 }
