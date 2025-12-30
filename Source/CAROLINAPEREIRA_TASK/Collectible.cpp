@@ -10,7 +10,6 @@ ACollectible::ACollectible()
 	SetRootComponent(Root);
 
 	FloatingTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("FloatingTimeline"));
-	FloatingTimeline->RegisterComponent();
 
 	CollectibleMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CollectibleMeshComponent"));
 	CollectibleMesh->SetupAttachment(Root);
@@ -34,7 +33,10 @@ void ACollectible::BeginPlay()
 	Super::BeginPlay();
 
 	GameInstance = Cast<UMyGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
-	GameInstance->IncreaseTotalAmount();
+	if (GameInstance)
+	{
+		GameInstance->IncreaseTotalAmount();
+	}
 
 	ObjectStartLocation = GetActorLocation();
 	ObjectEndLocation = GetActorLocation() + FVector(0.0f, 0.0f, DistanceToMove);
