@@ -135,7 +135,7 @@ void APlayerCharacter::TryToJump()
 
 void APlayerCharacter::Push()
 {
-	if (!isPushing && !isTryingToJump)
+	if (!isPushing && !GetCharacterMovement()->IsFalling())
 	{
 		float NewSpeed = SpeedWithImpulse + PushStrength;
 
@@ -183,7 +183,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 		ChangeSpeed(SpeedWithImpulse);
 	}
 
-	if (GetVelocity().Length() < 5)
+	if (GetVelocity().Length() <= 400)
 	{
 		ChangeSpeed(MinSpeed);
 		SpeedWithImpulse = MinSpeed;

@@ -83,7 +83,7 @@ protected:
     float MaxSpeed = 1800.0f;
 
     UPROPERTY(EditAnywhere, Category = "Skate")
-    float DecayRate = 10.0f;
+    float DecayRate = 40.0f;
 
     /** Current movement velocity and input direction */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
@@ -91,8 +91,6 @@ protected:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
     FVector InputDirection;
-
-	bool isTryingToJump = false;
 
     bool isTryingToPush = false;
 
