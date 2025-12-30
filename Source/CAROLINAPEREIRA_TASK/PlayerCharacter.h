@@ -29,12 +29,25 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
     float BaseLookUpRate;
 
+    UFUNCTION(BlueprintCallable, Category = "Skate")
+    bool PushState() { return isTryingToPush; }
+
+    UFUNCTION(BlueprintCallable, Category = "Skate")
+    void ChangePushState (bool NewState) { isTryingToPush = NewState; }
+
+    UFUNCTION(BlueprintCallable, Category = "Skate")
+    void ResetPush();
+
     // Called to bind functionality to input
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 protected:
     // Called when the game starts or when spawned
     virtual void BeginPlay() override;
+
+    virtual void Tick(float DeltaTime) override;
+
+    FTimerHandle PushCooldownTimer;
 
     /** Camera boom positioning the camera behind the character */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -57,6 +70,21 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Skate, meta = (AllowPrivateAccess = "true"))
     UStaticMeshComponent* Wheels;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skate")
+    float PushCooldown = 1.2f;
+
+    UPROPERTY(EditAnywhere, Category = "Movement")
+    float MinSpeed = 400.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Skate")
+    float PushStrength = 400.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Skate")
+    float MaxSpeed = 1800.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Skate")
+    float DecayRate = 10.0f;
+
     /** Current movement velocity and input direction */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
     FVector CurrentVelocity;
@@ -66,9 +94,15 @@ protected:
 
 	bool isTryingToJump = false;
 
+    bool isTryingToPush = false;
+
+    bool isPushing = false;
+
     float MovementValue = 0.f;
 
 	float TurningRateValue = 0.f;
+
+    float SpeedWithImpulse = 0.0f;
 
     /** Called for forwards/backward input */
     void MoveForward(float Value);
@@ -78,6 +112,8 @@ protected:
 
     /** Called for skate impulse */
     void Push();
+
+    void ChangeSpeed(float Speed);
 
     void TryToJump();
 

@@ -4,11 +4,14 @@
 #include "PlayerCharacter.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
+#include "TimerManager.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
 {
+	PrimaryActorTick.bCanEverTick = true;
+
 	// Set turn rates for input
 	BaseTurnRate = 45.f;
 	BaseLookUpRate = 45.f;
@@ -21,7 +24,7 @@ APlayerCharacter::APlayerCharacter()
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f); // ...at this rotation rate
-	GetCharacterMovement()->JumpZVelocity = 400.f;
+	GetCharacterMovement()->JumpZVelocity = 600.f;
 	GetCharacterMovement()->AirControl = 0.2f;
 
 	// Create a camera boom (pulls in towards the player if there is a collision)
@@ -53,6 +56,8 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	ChangeSpeed(MinSpeed);
+	SpeedWithImpulse = MinSpeed;
 }
 
 // Called to bind functionality to input
@@ -75,7 +80,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &APlayerCharacter::TryToJump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
-	PlayerInputComponent->BindAction("Push", IE_Pressed, this, &APlayerCharacter::Jump);
+	PlayerInputComponent->BindAction("Push", IE_Pressed, this, &APlayerCharacter::Push);
 }
 
 void APlayerCharacter::MoveForward(float Value)
@@ -90,7 +95,7 @@ void APlayerCharacter::MoveForward(float Value)
 		// get forward vector
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 
-		MovementValue = FMath::FInterpTo(MovementValue,Value, GetWorld()->GetDeltaSeconds(), 5.0f);
+		MovementValue = FMath::FInterpTo(MovementValue,Value, GetWorld()->GetDeltaSeconds(), 2.0f);
 		AddMovementInput(Direction, MovementValue);
 	}
 }
@@ -106,7 +111,7 @@ void APlayerCharacter::MoveRight(float Value)
 		// get right vector 
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
-		TurningRateValue = FMath::FInterpTo(TurningRateValue, Value, GetWorld()->GetDeltaSeconds(), 5.0f);
+		TurningRateValue = FMath::FInterpTo(TurningRateValue, Value, GetWorld()->GetDeltaSeconds(), 2.0f);
 		AddMovementInput(Direction, Value);
 	}
 }
@@ -130,6 +135,58 @@ void APlayerCharacter::TryToJump()
 
 void APlayerCharacter::Push()
 {
+	if (!isPushing && !isTryingToJump)
+	{
+		float NewSpeed = SpeedWithImpulse + PushStrength;
 
+		if (NewSpeed <= MaxSpeed)
+		{
+			SpeedWithImpulse = NewSpeed;
+			ChangeSpeed(SpeedWithImpulse);
+		}
+		else
+		{
+			SpeedWithImpulse = MaxSpeed;
+			ChangeSpeed(SpeedWithImpulse);
+		}
+
+		isTryingToPush = true;
+		isPushing = true;
+
+		// Schedule reset
+		GetWorldTimerManager().SetTimer(PushCooldownTimer, this, &APlayerCharacter::ResetPush, PushCooldown, false);
+	}
+}
+
+void APlayerCharacter::ResetPush()
+{
+	isPushing = false;
+}
+
+void APlayerCharacter::ChangeSpeed(float NewSpeed)
+{
+	GetCharacterMovement()->MaxWalkSpeed = NewSpeed;
+}
+
+void APlayerCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	// Gradually reduce speed back to minSpeed speed after a push
+	if (SpeedWithImpulse > MinSpeed)
+	{
+		SpeedWithImpulse -= DecayRate * DeltaTime;
+
+		// Never let SpeedWithImpulse go below MinSpeed
+		SpeedWithImpulse = FMath::Max(SpeedWithImpulse, MinSpeed);
+
+		ChangeSpeed(SpeedWithImpulse);
+	}
+
+	if (GetVelocity().Length() < 5)
+	{
+		ChangeSpeed(MinSpeed);
+		SpeedWithImpulse = MinSpeed;
+	}
 }
 
