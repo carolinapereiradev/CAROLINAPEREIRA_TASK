@@ -21,7 +21,7 @@ APlayerCharacter::APlayerCharacter()
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f); // ...at this rotation rate
-	GetCharacterMovement()->JumpZVelocity = 600.f;
+	GetCharacterMovement()->JumpZVelocity = 400.f;
 	GetCharacterMovement()->AirControl = 0.2f;
 
 	// Create a camera boom (pulls in towards the player if there is a collision)
@@ -34,13 +34,25 @@ APlayerCharacter::APlayerCharacter()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+
+	// Create mesh for the skateboard
+	Skate = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SkateStaticMeshComponent"));
+	SkateBase = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SkateBaseStaticMeshComponent"));
+	Wheel = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WheelStaticMeshComponent"));
+	Wheels = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WheelsStaticMeshComponent"));
+
+	// Attach skateboard components to the character mesh
+	Skate->SetupAttachment(GetMesh());
+	SkateBase->SetupAttachment(Skate);
+	Wheel->SetupAttachment(Skate);
+	Wheels->SetupAttachment(Skate);
 }
 
 // Called when the game starts or when spawned
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 }
 
 // Called to bind functionality to input
@@ -60,11 +72,16 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAxis("TurnRate", this, &APlayerCharacter::TurnAtRate);
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 	PlayerInputComponent->BindAxis("LookUpRate", this, &APlayerCharacter::LookUpAtRate);
+
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &APlayerCharacter::TryToJump);
+	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+	PlayerInputComponent->BindAction("Push", IE_Pressed, this, &APlayerCharacter::Jump);
 }
 
 void APlayerCharacter::MoveForward(float Value)
 {
-	if ((Controller != nullptr) && (Value != 0.0f))
+	// If we're already at rest AND no input is given, do nothing
+	if (Controller != nullptr)
 	{
 		// find out which way is forward
 		const FRotator Rotation = Controller->GetControlRotation();
@@ -72,13 +89,15 @@ void APlayerCharacter::MoveForward(float Value)
 
 		// get forward vector
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		AddMovementInput(Direction, Value);
+
+		MovementValue = FMath::FInterpTo(MovementValue,Value, GetWorld()->GetDeltaSeconds(), 5.0f);
+		AddMovementInput(Direction, MovementValue);
 	}
 }
 
 void APlayerCharacter::MoveRight(float Value)
 {
-	if ((Controller != nullptr) && (Value != 0.0f))
+	if (Controller != nullptr)
 	{
 		// find out which way is right
 		const FRotator Rotation = Controller->GetControlRotation();
@@ -86,7 +105,8 @@ void APlayerCharacter::MoveRight(float Value)
 
 		// get right vector 
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-		// add movement in that direction
+
+		TurningRateValue = FMath::FInterpTo(TurningRateValue, Value, GetWorld()->GetDeltaSeconds(), 5.0f);
 		AddMovementInput(Direction, Value);
 	}
 }
@@ -101,5 +121,15 @@ void APlayerCharacter::LookUpAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
+}
+
+void APlayerCharacter::TryToJump()
+{
+	Jump();
+}
+
+void APlayerCharacter::Push()
+{
+
 }
 
